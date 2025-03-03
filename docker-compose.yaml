@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  bankslip:
+    build: .
+    restart: unless-stopped
+    ports:
+      - 4000:4000
+    volumes:
+      - .:/home/node/app
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - my-network
+
+networks:
+  my-network:
+    external: true
