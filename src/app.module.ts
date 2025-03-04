@@ -2,9 +2,15 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { SlipsModule } from './slips/slips.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [SlipsModule],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    SlipsModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
