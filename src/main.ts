@@ -1,29 +1,30 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { Transport } from '@nestjs/microservices';
+import { kafkaConsumerConfig } from './config/kafka.config';
+import { BadRequestException, ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule); // Logger já configurado no módulo
 
-  app.connectMicroservice({
-    name: 'KAFKA_SERVICE',
-    transport: Transport.KAFKA,
-    options: {
-      client: {
-        clientId: 'bankslip-consumer',
-        brokers: ['kafka:9092'],
-        logLevel: 4,
+  // Habilitar validação global
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true, // Transforma o payload em DTO
+      whitelist: true, // Remove campos extras não definidos no DTO
+      forbidNonWhitelisted: true, // Rejeita payloads com campos desconhecidos
+      validationError: { target: false }, // Simplifica a mensagem de erro
+      exceptionFactory: (errors) => {
+        const messages = errors.map((err) => {
+          const constraints = err.constraints || {}; // Garante que constraints não seja undefined
+          return `${err.property} - ${Object.values(constraints).join(', ')}`;
+        });
+        return new BadRequestException(`Validation failed: ${messages.join('; ')}`);
       },
-      consumer: {
-        groupId: 'slip-consumer',
-        heartbeatInterval: 3000, // Intervalo de heartbeat em ms (padrão: 3000)
-            sessionTimeout: 30000,   // Tempo máximo para considerar o consumidor inativo (padrão: 30000)
-            rebalanceTimeout: 60000, // Tempo máximo para completar o rebalanceamento (padrão: 60000)
-      },
-    },
-  });
+    }),
+  );
+
+  app.connectMicroservice(kafkaConsumerConfig);
   await app.startAllMicroservices();
-
   await app.listen(process.env.PORT ?? 4000);
 }
 bootstrap();
