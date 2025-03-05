@@ -1,6 +1,11 @@
-import { IsString, IsEnum, IsNumber, IsDateString, IsObject, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsString, IsEnum, IsNumber, IsDateString, IsObject, IsNotEmpty, IsOptional, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class BankSlipPayloadDto {
+  @IsString()
+  @IsNotEmpty()
+  topic: string; 
+
   @IsString()
   @IsNotEmpty()
   external_id: string;
@@ -33,9 +38,11 @@ export class BankSlipMessageDto {
 
   @IsObject()
   @IsNotEmpty()
+  @ValidateNested() // Valida o objeto aninhado
+  @Type(() => BankSlipPayloadDto) // Transforma o payload em BankSlipPayloadDto
   payload: BankSlipPayloadDto;
 
-  @IsDateString()
+  @IsString()
   @IsNotEmpty()
   timestamp: string;
 }
